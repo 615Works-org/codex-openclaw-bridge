@@ -9,7 +9,7 @@ using System.Threading;
 using System.Web.Script.Serialization;
 using System.Windows.Forms;
 
-class CodexBotTray : Form
+class CodexOpenClawBridgeTray : Form
 {
     [DllImport("user32.dll", CharSet = CharSet.Auto)]
     private static extern IntPtr SendMessage(IntPtr hWnd, int msg, IntPtr wParam, string lParam);
@@ -24,7 +24,7 @@ class CodexBotTray : Form
     private System.Windows.Forms.Timer updateCheckTimer;
     private string botDir;
     private string envPath;
-    private string taskName = "CodexDiscordBot";
+    private string taskName = "CodexOpenClawBridge";
     private string currentVersion = "unknown";
     private bool updateAvailable = false;
     private string cachedReleaseNotes = "";
@@ -44,7 +44,7 @@ class CodexBotTray : Form
     private string langPrefFile;
     private bool isKorean = false;
 
-    public CodexBotTray()
+    public CodexOpenClawBridgeTray()
     {
         botDir = Path.GetDirectoryName(Path.GetDirectoryName(Application.ExecutablePath));
         envPath = Path.Combine(botDir, ".env");
@@ -144,10 +144,10 @@ class CodexBotTray : Form
 
     private bool IsRunning()
     {
-        // 1. Check CodexBot.exe process
+        // 1. Check the named Bridge runtime process.
         try
         {
-            if (Process.GetProcessesByName("CodexBot").Length > 0) return true;
+            if (Process.GetProcessesByName("CodexOpenClawBridge").Length > 0) return true;
         }
         catch { }
         // 2. Check lock file (written by StartBot cmd chain)
@@ -158,7 +158,7 @@ class CodexBotTray : Form
             {
                 var lockAge = DateTime.Now - File.GetLastWriteTime(Path.Combine(botDir, ".bot.lock"));
                 if (lockAge.TotalMinutes < 2) return true;
-                // Stale lock — check if any node/CodexBot process is actually running
+                // Stale lock — check if any node/Bridge process is actually running
                 var proc = new Process();
                 proc.StartInfo.FileName = "powershell";
                 proc.StartInfo.Arguments = "-NoProfile -Command \"if (Get-WmiObject Win32_Process | Where-Object { $_.CommandLine -like '*dist/index.js*' }) { exit 0 } else { exit 1 }\"";
@@ -241,7 +241,7 @@ class CodexBotTray : Form
 
     private string RuntimeCachePath()
     {
-        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".codex", "codex-discord-runtime.json");
+        return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".codex", "codex-openclaw-bridge-runtime.json");
     }
 
     private string ResolveCodexCommand()
@@ -408,11 +408,12 @@ class CodexBotTray : Form
 
         try
         {
-            SendJsonLine(proc, "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"initialize\",\"params\":{\"clientInfo\":{\"name\":\"codex-discord-windows-tray\",\"version\":\"" + EscapeJson(currentVersion) + "\"},\"capabilities\":{\"experimentalApi\":true}}}");
+            SendJsonLine(proc, "{\"id\":1,\"method\":\"initialize\",\"params\":{\"clientInfo\":{\"name\":\"codex_openclaw_bridge_windows_tray\",\"title\":\"Codex OpenClaw Bridge Tray\",\"version\":\"" + EscapeJson(currentVersion) + "\"}}}");
             var initResponse = ReadJsonResponse(proc, 1, 5000);
             if (initResponse == null) return null;
+            SendJsonLine(proc, "{\"method\":\"initialized\",\"params\":{}}");
 
-            SendJsonLine(proc, "{\"jsonrpc\":\"2.0\",\"id\":2,\"method\":\"account/rateLimits/read\",\"params\":{}}");
+            SendJsonLine(proc, "{\"id\":2,\"method\":\"account/rateLimits/read\",\"params\":{}}");
             string response = ReadJsonResponse(proc, 2, 5000);
             if (string.IsNullOrEmpty(response)) return null;
 
@@ -689,7 +690,7 @@ class CodexBotTray : Form
             string psScript =
                 "[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; " +
                 "try { " +
-                "$r = Invoke-RestMethod -Uri 'https://api.github.com/repos/chadingTV/codex-discord/releases' -TimeoutSec 10 -Headers @{'User-Agent'='codex-discord-tray'}; " +
+                "$r = Invoke-RestMethod -Uri 'https://api.github.com/repos/615Works-org/codex-openclaw-bridge/releases' -TimeoutSec 10 -Headers @{'User-Agent'='codex-openclaw-bridge-tray'}; " +
                 "$cv = '" + currentTag.Replace("'", "''") + "'.TrimStart('v').Split('.'); " +
                 "$notes = @(); $latest = '" + currentTag.Replace("'", "''") + "'; " +
                 "foreach($rel in $r) { " +
@@ -827,7 +828,7 @@ class CodexBotTray : Form
     {
         var form = new Form()
         {
-            Text = L("Updating Codex Discord", "Codex Discord 업데이트 중"),
+            Text = L("Updating Codex OpenClaw Bridge", "Codex OpenClaw Bridge 업데이트 중"),
             Width = 620,
             Height = 460,
             StartPosition = FormStartPosition.CenterScreen,
@@ -948,7 +949,7 @@ class CodexBotTray : Form
         {
             AppendUpdateLog(logBox, L("Stashing local changes...", "로컬 변경사항을 stash 합니다..."));
             int stashCode;
-            string stashOutput = RunCmdCombined("git", "-C \"" + botDir + "\" stash push -u -m \"codex-discord-auto-update\"", out stashCode);
+            string stashOutput = RunCmdCombined("git", "-C \"" + botDir + "\" stash push -u -m \"codex-openclaw-bridge-auto-update\"", out stashCode);
             if (!string.IsNullOrWhiteSpace(stashOutput)) AppendUpdateLog(logBox, stashOutput);
         }
 
@@ -1042,7 +1043,7 @@ class CodexBotTray : Form
         // Tray exe 재컴파일 및 재시작
         // 실행 중인 자기 자신은 삭제 불가하므로 bat 스크립트로 대기 후 교체
         string trayExe = Application.ExecutablePath;
-        string traySrc = Path.Combine(Path.GetDirectoryName(trayExe), "CodexBotTray.cs");
+        string traySrc = Path.Combine(Path.GetDirectoryName(trayExe), "CodexOpenClawBridgeTray.cs");
         string updateBat = Path.Combine(botDir, ".tray-update.bat");
 
         if (File.Exists(traySrc))
@@ -1056,7 +1057,7 @@ class CodexBotTray : Form
                 "set \"LOG=" + updateLog + "\"\r\n" +
                 "echo [%date% %time%] Update started > \"%LOG%\"\r\n" +
                 ":: Kill all tray processes and wait\r\n" +
-                "taskkill /f /im CodexBotTray.exe >nul 2>&1\r\n" +
+                "taskkill /f /im CodexOpenClawBridgeTray.exe >nul 2>&1\r\n" +
                 "timeout /t 3 /nobreak >nul\r\n" +
                 ":: Delete old exe\r\n" +
                 "del \"" + trayExe + "\" >nul 2>&1\r\n" +
@@ -1190,17 +1191,17 @@ class CodexBotTray : Form
         if (!hasEnv)
         {
             color = Color.Orange;
-            text = L("Codex Discord Bot: Setup Required", "Codex Discord Bot: 설정 필요");
+            text = L("Codex OpenClaw Bridge: Setup Required", "Codex OpenClaw Bridge: 설정 필요");
         }
         else if (running)
         {
             color = Color.LimeGreen;
-            text = L("Codex Discord Bot: Running", "Codex Discord Bot: 실행 중");
+            text = L("Codex OpenClaw Bridge: Running", "Codex OpenClaw Bridge: 실행 중");
         }
         else
         {
             color = Color.Red;
-            text = L("Codex Discord Bot: Stopped", "Codex Discord Bot: 중지됨");
+            text = L("Codex OpenClaw Bridge: Stopped", "Codex OpenClaw Bridge: 중지됨");
         }
 
         bool changed = (text != lastStatusText);
@@ -1310,8 +1311,8 @@ class CodexBotTray : Form
         botStarting = true;
         RebuildControlPanel();
         KillBot();
-        // Copy node.exe as CodexBot.exe so it shows as "CodexBot" in Task Manager
-        string codexBotExe = Path.Combine(botDir, "CodexBot.exe");
+        // Copy node.exe so the Bridge has a recognizable Task Manager process name.
+        string codexBotExe = Path.Combine(botDir, "CodexOpenClawBridge.exe");
         try
         {
             string whereOut = RunCmdOutput("where", "node").Trim();
@@ -1355,7 +1356,7 @@ class CodexBotTray : Form
                 UpdateStatus();
                 BuildMenu();
                 RebuildControlPanel();
-                trayIcon.BalloonTipTitle = L("Codex Discord Bot Started", "Codex Discord Bot 시작됨");
+                trayIcon.BalloonTipTitle = L("Codex OpenClaw Bridge Started", "Codex OpenClaw Bridge 시작됨");
                 trayIcon.BalloonTipText = L("Bot is running. Click tray icon to manage.",
                                              "봇이 실행 중입니다. 트레이 아이콘을 클릭하여 관리하세요.");
                 trayIcon.BalloonTipIcon = ToolTipIcon.Info;
@@ -1377,16 +1378,16 @@ class CodexBotTray : Form
 
     private void KillBot()
     {
-        // Kill CodexBot.exe process (copied from node.exe with custom name)
+        // Kill the copied Bridge runtime process.
         try
         {
-            foreach (var proc in Process.GetProcessesByName("CodexBot"))
+            foreach (var proc in Process.GetProcessesByName("CodexOpenClawBridge"))
             {
                 try { proc.Kill(); proc.WaitForExit(3000); } catch { }
             }
         }
         catch { }
-        // Fallback: kill any node.exe running dist/index.js (in case CodexBot.exe wasn't used)
+        // Fallback: kill any node.exe running dist/index.js.
         try
         {
             var proc = new Process();
@@ -1471,7 +1472,7 @@ class CodexBotTray : Form
 
         var form = new Form()
         {
-            Text = L("Codex Discord Bot Settings", "Codex Discord Bot 설정"),
+            Text = L("Codex OpenClaw Bridge Settings", "Codex OpenClaw Bridge 설정"),
             Width = 500,
             Height = 520,
             StartPosition = FormStartPosition.CenterScreen,
@@ -1484,12 +1485,12 @@ class CodexBotTray : Form
 
         // Setup guide link
         var linkLabel = new LinkLabel() { Text = L("Open Setup Guide", "설정 가이드 열기"), Left = 15, Top = 10, Width = 450, Height = 20, LinkColor = LinkBlue, BackColor = Color.Transparent };
-        linkLabel.LinkClicked += (s, ev) => { Process.Start("https://github.com/chadingTV/codex-discord/blob/main/SETUP.md"); };
+        linkLabel.LinkClicked += (s, ev) => { Process.Start("https://github.com/615Works-org/codex-openclaw-bridge/blob/main/SETUP.md"); };
         form.Controls.Add(linkLabel);
 
         // Issues link
         var issueLabel = new LinkLabel() { Text = L("Bug Report / Feature Request (GitHub Issues)", "버그 신고 / 기능 요청 (GitHub Issues)"), Left = 15, Top = 32, Width = 450, Height = 20, LinkColor = LinkBlue, BackColor = Color.Transparent };
-        issueLabel.LinkClicked += (s, ev) => { Process.Start("https://github.com/chadingTV/codex-discord/issues"); };
+        issueLabel.LinkClicked += (s, ev) => { Process.Start("https://github.com/615Works-org/codex-openclaw-bridge/issues"); };
         form.Controls.Add(issueLabel);
 
         string[][] fields = new string[][] {
@@ -1753,7 +1754,7 @@ class CodexBotTray : Form
 
         controlPanel = new Form()
         {
-            Text = "Codex Discord Bot",
+            Text = "Codex OpenClaw Bridge",
             Width = panelWidth,
             Height = 590,
             StartPosition = FormStartPosition.CenterScreen,
@@ -1814,7 +1815,7 @@ class CodexBotTray : Form
 
         var titleLabel = new Label()
         {
-            Text = "Codex Discord Bot",
+            Text = "Codex OpenClaw Bridge",
             Left = 82, Top = y,
             Width = 250, Height = 24,
             Font = new Font(FontFamily.GenericSansSerif, 14, FontStyle.Bold),
@@ -2190,7 +2191,7 @@ class CodexBotTray : Form
             Font = new Font(FontFamily.GenericSansSerif, 8.5f),
             LinkColor = LinkBlue, BackColor = Color.Transparent
         };
-        ghLink.LinkClicked += (s, ev) => { Process.Start("https://github.com/chadingTV/codex-discord"); };
+        ghLink.LinkClicked += (s, ev) => { Process.Start("https://github.com/615Works-org/codex-openclaw-bridge"); };
         controlPanel.Controls.Add(ghLink);
         y += 22;
 
@@ -2203,7 +2204,7 @@ class CodexBotTray : Form
             Font = new Font(FontFamily.GenericSansSerif, 8.5f),
             LinkColor = LinkBlue, BackColor = Color.Transparent
         };
-        issueLink.LinkClicked += (s, ev) => { Process.Start("https://github.com/chadingTV/codex-discord/issues"); };
+        issueLink.LinkClicked += (s, ev) => { Process.Start("https://github.com/615Works-org/codex-openclaw-bridge/issues"); };
         controlPanel.Controls.Add(issueLink);
         y += 22;
 
@@ -2258,9 +2259,9 @@ class CodexBotTray : Form
     [STAThread]
     static void Main()
     {
-        // Kill any other CodexBotTray instances (handles leftover duplicates from updates)
+        // Kill any other Bridge tray instances (handles leftover duplicates from updates)
         int myPid = Process.GetCurrentProcess().Id;
-        foreach (var proc in Process.GetProcessesByName("CodexBotTray"))
+        foreach (var proc in Process.GetProcessesByName("CodexOpenClawBridgeTray"))
         {
             if (proc.Id != myPid)
             {
@@ -2271,7 +2272,7 @@ class CodexBotTray : Form
 
         // Single instance check using named Mutex
         bool createdNew;
-        using (var mutex = new Mutex(true, "CodexBotTray_SingleInstance", out createdNew))
+        using (var mutex = new Mutex(true, "CodexOpenClawBridgeTray_SingleInstance", out createdNew))
         {
             if (!createdNew)
             {
@@ -2281,7 +2282,7 @@ class CodexBotTray : Form
 
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new CodexBotTray());
+            Application.Run(new CodexOpenClawBridgeTray());
         }
     }
 }

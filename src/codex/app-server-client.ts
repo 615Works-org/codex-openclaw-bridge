@@ -71,8 +71,19 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null;
 }
 
-function shouldUseShell(command: string): boolean {
-  return process.platform === "win32" && /\.(cmd|bat)$/i.test(command);
+function appServerSpawn(command: string): { command: string; args: string[] } {
+  if (process.platform === "win32" && /\.(cmd|bat)$/i.test(command)) {
+    const commandProcessor = process.env.ComSpec || "cmd.exe";
+    const commandLine = command.includes("/") || command.includes("\\")
+      ? `call "${command}" app-server`
+      : `${command} app-server`;
+    return {
+      command: commandProcessor,
+      args: ["/d", "/s", "/c", commandLine],
+    };
+  }
+
+  return { command, args: ["app-server"] };
 }
 
 export class CodexAppServerClient extends EventEmitter {
@@ -97,9 +108,9 @@ export class CodexAppServerClient extends EventEmitter {
 
   private async startInternal(): Promise<void> {
     const codexCommand = resolveCodexCommand();
-    this.process = spawn(codexCommand, ["app-server"], {
+    const launch = appServerSpawn(codexCommand);
+    this.process = spawn(launch.command, launch.args, {
       stdio: ["pipe", "pipe", "pipe"],
-      shell: shouldUseShell(codexCommand),
       windowsHide: true,
     });
 
@@ -129,13 +140,13 @@ export class CodexAppServerClient extends EventEmitter {
 
     await this.requestWithProcess("initialize", {
       clientInfo: {
-        name: "codex-discord",
+        name: "codex_openclaw_bridge",
+        title: "Codex OpenClaw Bridge",
         version: "0.1.0",
       },
-      capabilities: {
-        experimentalApi: true,
-      },
     });
+
+    this.notifyWithProcess("initialized", {});
 
     this.initialized = true;
   }
@@ -205,11 +216,14 @@ export class CodexAppServerClient extends EventEmitter {
       });
     });
 
-    this.process.stdin.write(
-      `${JSON.stringify({ jsonrpc: "2.0", id, method, params })}\n`,
-    );
+    this.process.stdin.write(`${JSON.stringify({ id, method, params })}\n`);
 
     return response;
+  }
+
+  private notifyWithProcess(method: string, params: Record<string, unknown>): void {
+    if (!this.process) throw new Error("Codex app-server is not running");
+    this.process.stdin.write(`${JSON.stringify({ method, params })}\n`);
   }
 
   private rejectPendingRequests(reason: Error): void {
@@ -228,9 +242,7 @@ export class CodexAppServerClient extends EventEmitter {
   async respond(requestId: number, result: Record<string, unknown>): Promise<void> {
     await this.ensureStarted();
     if (!this.process) throw new Error("Codex app-server is not running");
-    this.process.stdin.write(
-      `${JSON.stringify({ jsonrpc: "2.0", id: requestId, result })}\n`,
-    );
+    this.process.stdin.write(`${JSON.stringify({ id: requestId, result })}\n`);
   }
 
   async listThreads(cwd: string): Promise<CodexThreadSummary[]> {
@@ -254,8 +266,8 @@ export class CodexAppServerClient extends EventEmitter {
   async startThread(cwd: string): Promise<CodexThreadSummary> {
     const result = await this.request<{ thread: CodexThreadSummary }>("thread/start", {
       cwd,
-      approvalPolicy: "on-request",
-      sandbox: "workspace-write",
+      approvalPolicy: "onRequest",
+      sandbox: "workspaceWrite",
       modelProvider: "openai",
     });
     return result.thread;
