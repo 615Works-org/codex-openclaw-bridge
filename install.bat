@@ -3,7 +3,7 @@ chcp 65001 >nul 2>&1
 setlocal enabledelayedexpansion
 
 echo ===================================
-echo  Codex Discord Controller Installer
+echo  Codex OpenClaw Bridge Installer
 echo ===================================
 echo.
 
@@ -23,7 +23,7 @@ if %errorlevel% neq 0 (
     )
     echo   winget not available. Downloading Node.js installer...
     set "NODE_MSI=%TEMP%\node-install.msi"
-    powershell -Command "Invoke-WebRequest -Uri 'https://nodejs.org/dist/v22.14.0/node-v22.14.0-x64.msi' -OutFile '!NODE_MSI!'" 2>nul
+    powershell -Command "Invoke-WebRequest -Uri 'https://nodejs.org/dist/v24.19.0/node-v24.19.0-x64.msi' -OutFile '!NODE_MSI!'" 2>nul
     if exist "!NODE_MSI!" (
         echo   Installing Node.js (this may take a moment^)...
         msiexec /i "!NODE_MSI!" /passive /norestart
@@ -42,8 +42,8 @@ if %errorlevel% neq 0 (
 
 for /f "tokens=1 delims=." %%a in ('node -v') do set NODE_MAJOR=%%a
 set NODE_MAJOR=%NODE_MAJOR:v=%
-if %NODE_MAJOR% lss 20 (
-    echo   ! Node.js 20+ required. Current: v%NODE_MAJOR%
+if %NODE_MAJOR% lss 22 (
+    echo   ! Node.js 22+ required. Current: v%NODE_MAJOR%
     echo   Upgrading...
     where winget >nul 2>&1
     if %errorlevel% equ 0 (
@@ -54,7 +54,7 @@ if %NODE_MAJOR% lss 20 (
     )
     echo   winget not available. Downloading Node.js installer...
     set "NODE_MSI=%TEMP%\node-install.msi"
-    powershell -Command "Invoke-WebRequest -Uri 'https://nodejs.org/dist/v22.14.0/node-v22.14.0-x64.msi' -OutFile '!NODE_MSI!'" 2>nul
+    powershell -Command "Invoke-WebRequest -Uri 'https://nodejs.org/dist/v24.19.0/node-v24.19.0-x64.msi' -OutFile '!NODE_MSI!'" 2>nul
     if exist "!NODE_MSI!" (
         echo   Upgrading Node.js (this may take a moment^)...
         msiexec /i "!NODE_MSI!" /passive /norestart
@@ -141,18 +141,18 @@ set "SHORTCUT_VBS=%TEMP%\create-shortcut.vbs"
 for /f "usebackq delims=" %%D in (`powershell -NoProfile -Command "[Environment]::GetFolderPath('Desktop')"`) do set "DESKTOP=%%D"
 
 echo Set oWS = WScript.CreateObject("WScript.Shell") > "%SHORTCUT_VBS%"
-echo sLinkFile = "%DESKTOP%\Codex Discord Bot.lnk" >> "%SHORTCUT_VBS%"
+echo sLinkFile = "%DESKTOP%\Codex OpenClaw Bridge.lnk" >> "%SHORTCUT_VBS%"
 echo Set oLink = oWS.CreateShortcut(sLinkFile) >> "%SHORTCUT_VBS%"
 echo oLink.TargetPath = "%SCRIPT_DIR%\win-start.bat" >> "%SHORTCUT_VBS%"
 echo oLink.WorkingDirectory = "%SCRIPT_DIR%" >> "%SHORTCUT_VBS%"
-echo oLink.Description = "Codex Discord Bot" >> "%SHORTCUT_VBS%"
+echo oLink.Description = "Codex OpenClaw Bridge" >> "%SHORTCUT_VBS%"
 echo oLink.IconLocation = "%SCRIPT_DIR%\docs\icon.ico, 0" >> "%SHORTCUT_VBS%"
 echo oLink.WindowStyle = 7 >> "%SHORTCUT_VBS%"
 echo oLink.Save >> "%SHORTCUT_VBS%"
 cscript //nologo "%SHORTCUT_VBS%" >nul 2>&1
 del "%SHORTCUT_VBS%" >nul 2>&1
 
-if exist "%DESKTOP%\Codex Discord Bot.lnk" (
+if exist "%DESKTOP%\Codex OpenClaw Bridge.lnk" (
     echo   OK Desktop shortcut created
 ) else (
     echo   ! Could not create desktop shortcut
@@ -169,7 +169,7 @@ if %NEED_LOGIN%==1 (
     echo   1. Run 'codex login' to log in to Codex
     echo   2. Configure settings from the tray icon
 ) else (
-    echo Starting Codex Discord Bot...
+    echo Starting Codex OpenClaw Bridge...
     echo.
     start "" "%SCRIPT_DIR%\win-start.bat"
 )

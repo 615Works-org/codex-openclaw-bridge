@@ -23,8 +23,10 @@ menubar/ClaudeBotMenu
 menubar/CodexBotMenu
 tray/ClaudeBotTray.exe
 tray/CodexBotTray.exe
+tray/CodexOpenClawBridgeTray.exe
 ClaudeBot.exe
 CodexBot.exe
+CodexOpenClawBridge.exe
 com.claude-discord.plist
 com.codex-discord.plist
 .tray-lang

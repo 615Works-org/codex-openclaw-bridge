@@ -5,9 +5,9 @@ setlocal EnableExtensions EnableDelayedExpansion
 set "SCRIPT_DIR=%~dp0"
 if "%SCRIPT_DIR:~-1%"=="\" set "SCRIPT_DIR=%SCRIPT_DIR:~0,-1%"
 set "ENV_FILE=%SCRIPT_DIR%\.env"
-set "TRAY_EXE=%SCRIPT_DIR%\tray\CodexBotTray.exe"
-set "TRAY_SRC=%SCRIPT_DIR%\tray\CodexBotTray.cs"
-set "BOT_EXE=%SCRIPT_DIR%\CodexBot.exe"
+set "TRAY_EXE=%SCRIPT_DIR%\tray\CodexOpenClawBridgeTray.exe"
+set "TRAY_SRC=%SCRIPT_DIR%\tray\CodexOpenClawBridgeTray.cs"
+set "BOT_EXE=%SCRIPT_DIR%\CodexOpenClawBridge.exe"
 set "LOG_FILE=%SCRIPT_DIR%\bot.log"
 
 where node >nul 2>&1
@@ -55,7 +55,7 @@ call :stop_bot >nul 2>&1
 call :build_tray_if_needed
 
 if exist "%TRAY_EXE%" (
-    taskkill /im CodexBotTray.exe /f >nul 2>&1
+    taskkill /im CodexOpenClawBridgeTray.exe /f >nul 2>&1
     start "" "%TRAY_EXE%" --show
 )
 
@@ -143,12 +143,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command ^
 exit /b 0
 
 :stop_bot
-taskkill /im CodexBot.exe /f >nul 2>&1
-taskkill /im node.exe /fi "WINDOWTITLE eq CodexDiscordBot" /f >nul 2>&1
+taskkill /im CodexOpenClawBridge.exe /f >nul 2>&1
+taskkill /im node.exe /fi "WINDOWTITLE eq CodexOpenClawBridge" /f >nul 2>&1
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
     "$ws = [regex]::Escape('%SCRIPT_DIR%');" ^
     "$procs = Get-CimInstance Win32_Process | Where-Object {" ^
-    "  ($_.Name -in @('node.exe','CodexBot.exe')) -and $_.CommandLine -and ($_.CommandLine -match $ws) -and ($_.CommandLine -like '*dist\\index.js*')" ^
+    "  ($_.Name -in @('node.exe','CodexOpenClawBridge.exe')) -and $_.CommandLine -and ($_.CommandLine -match $ws) -and ($_.CommandLine -like '*dist\\index.js*')" ^
     "};" ^
     "$procs | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }"
 del "%SCRIPT_DIR%\.bot.lock" >nul 2>&1
@@ -158,7 +158,7 @@ exit /b 0
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
     "$ws = [regex]::Escape('%SCRIPT_DIR%');" ^
     "$procs = Get-CimInstance Win32_Process | Where-Object {" ^
-    "  ($_.Name -in @('node.exe','CodexBot.exe')) -and $_.CommandLine -and ($_.CommandLine -match $ws) -and ($_.CommandLine -like '*dist\\index.js*')" ^
+    "  ($_.Name -in @('node.exe','CodexOpenClawBridge.exe')) -and $_.CommandLine -and ($_.CommandLine -match $ws) -and ($_.CommandLine -like '*dist\\index.js*')" ^
     "};" ^
     "if ($procs) { exit 0 } else { exit 1 }"
 exit /b %errorlevel%

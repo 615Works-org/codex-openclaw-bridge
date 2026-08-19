@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 
-const CACHE_PATH = path.join(os.homedir(), ".codex", "codex-discord-runtime.json");
+const CACHE_PATH = path.join(os.homedir(), ".codex", "codex-openclaw-bridge-runtime.json");
 
 interface RuntimeCache {
   codexCommand?: string;

@@ -1,6 +1,11 @@
-# Codex Discord Setup Guide
+# Codex OpenClaw Bridge Setup Guide
 
-Complete setup guide for running `codex-discord` on macOS, Linux, or Windows.
+> **Implementation notice:** This guide is inherited from the upstream fork and
+> is being adapted for v0.1. Do not introduce Discord credentials until the
+> Phase 3 setup work begins. `docs/SPEC-v0.1.md` is authoritative.
+
+Upstream setup reference for running the Discord/Codex foundation on macOS,
+Linux, or Windows. Codex OpenClaw Bridge v0.1 itself targets Windows.
 
 > **[한국어 문서](docs/SETUP.kr.md)** | **[README](README.md)**
 
@@ -50,16 +55,16 @@ If you previously used an API-key-based workflow elsewhere, leave that out here 
 ### Recommended: installer script
 
 ```bash
-git clone https://github.com/chadingTV/codex-discord.git
-cd codex-discord
+git clone https://github.com/615Works-org/codex-openclaw-bridge.git
+cd codex-openclaw-bridge
 ./install.sh
 ```
 
 Windows:
 
 ```bat
-git clone https://github.com/chadingTV/codex-discord.git
-cd codex-discord
+git clone https://github.com/615Works-org/codex-openclaw-bridge.git
+cd codex-openclaw-bridge
 install.bat
 ```
 
@@ -74,8 +79,8 @@ The install scripts:
 ### Manual install
 
 ```bash
-git clone https://github.com/chadingTV/codex-discord.git
-cd codex-discord
+git clone https://github.com/615Works-org/codex-openclaw-bridge.git
+cd codex-openclaw-bridge
 npm install
 npm run build
 ```

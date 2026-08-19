@@ -56,7 +56,7 @@ async function main() {
     console.error("Uncaught exception:", error);
   });
 
-  console.log("Starting Codex Discord Controller...");
+  console.log("Starting Codex OpenClaw Bridge...");
 
   loadConfig();
   console.log("Config loaded");
