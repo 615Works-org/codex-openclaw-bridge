@@ -266,8 +266,8 @@ export class CodexAppServerClient extends EventEmitter {
   async startThread(cwd: string): Promise<CodexThreadSummary> {
     const result = await this.request<{ thread: CodexThreadSummary }>("thread/start", {
       cwd,
-      approvalPolicy: "onRequest",
-      sandbox: "workspaceWrite",
+      approvalPolicy: "on-request",
+      sandbox: "workspace-write",
       modelProvider: "openai",
     });
     return result.thread;

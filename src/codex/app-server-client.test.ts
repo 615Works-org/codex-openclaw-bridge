@@ -93,8 +93,8 @@ describe("CodexAppServerClient protocol", () => {
         method: "thread/start",
         params: {
           cwd: "C:\\Projects\\bridge",
-          approvalPolicy: "onRequest",
-          sandbox: "workspaceWrite",
+          approvalPolicy: "on-request",
+          sandbox: "workspace-write",
           modelProvider: "openai",
         },
       },
